@@ -85,7 +85,6 @@ function (Okta, BaseLoginModel, CookieUtil, Enums) {
 
       this.appState.trigger('loading', true);
       return this.startTransaction(function (authClient) {
-
         // Add the custom header for fingerprint if needed, and then remove it afterwards
         // Since we only need to send it for primary auth
         if (deviceFingerprintEnabled) {
@@ -99,13 +98,17 @@ function (Okta, BaseLoginModel, CookieUtil, Enums) {
             multiOptionalFactorEnroll: multiOptionalFactorEnroll
           }
         })
+        .fail(function(d){
+        	throw d;
+        })
         .fin(function () {
           if (deviceFingerprintEnabled) {
             delete authClient.options.headers['X-Device-Fingerprint'];
           }
         });
       })
-      .fail(_.bind(function () {
+      .fail(_.bind(function (e) {
+        this.trigger('error', e);
         this.trigger('error');
         // Specific event handled by the Header for the case where the security image is not
         // enabled and we want to show a spinner. (Triggered only here and handled only by Header).
